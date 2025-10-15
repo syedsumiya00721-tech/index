@@ -46,8 +46,7 @@ Examples:
 ## Deployment
 
 Deployment link:
-https://syedsumiya00721-tech.github.io/index/
-
+https://syedsumiya00721-tech.github.io/nutri-tracker/
 
 ---
 
