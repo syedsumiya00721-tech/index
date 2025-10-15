@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mini Nutrition Tracker</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; min-height: 100%; margin: 30px auto; padding: 30px; background: #e8f5e8; box-sizing: border-box; }
+    .container { background: white; padding: 50px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-height: 600px; }
+    h1 { text-align: center; color: #2c5530; margin-bottom: 30px; }
+    .search { display: flex; gap: 10px; margin-bottom: 20px; }
+    input { flex: 1; padding: 18px; border: none; border-radius: 12px; font-size: 18px; background: #f8f9fa; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    button { padding: 12px 20px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    button:hover { background: #45a049; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 20px; margin: 30px 0; }
+    .stat { background: #f8f9fa; padding: 25px; border-radius: 15px; text-align: center; position: relative; min-height: 120px; }
+    .stat-value { font-size: 20px; font-weight: bold; color: #2c5530; z-index: 2; position: relative; }
+    .stat-label { font-size: 12px; color: #666; margin-top: 5px; }
+    .circle { width: 100px; height: 100px; border-radius: 50%; background: conic-gradient(#4CAF50 0deg, #e0e0e0 0deg); margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
+    .foods { margin-top: 20px; }
+    .food-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #e8f5e8; margin: 5px 0; border-radius: 8px; }
+    .remove { background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🥗 Mini Nutrition Tracker</h1>
+    
+    <div class="search">
+      <input id="food" placeholder="Enter food (roti, dosa, chicken curry...)" onkeypress="if(event.key==='Enter') addFood()">
+      <button onclick="addFood()">Add Food</button>
+      <button onclick="reset()" style="background:#666">Reset</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat" style="background:#fff3cd"><div class="circle" id="calCircle"><div class="stat-value" id="calories">0</div></div><div class="stat-label">Calories / 2000</div></div>
+      <div class="stat" style="background:#e7f3ff"><div class="circle" id="proteinCircle"><div class="stat-value" id="protein">0g</div></div><div class="stat-label">Protein / 50g</div></div>
+      <div class="stat" style="background:#f0f8e7"><div class="circle" id="carbsCircle"><div class="stat-value" id="carbs">0g</div></div><div class="stat-label">Carbs / 250g</div></div>
+      <div class="stat" style="background:#ffe7f3"><div class="circle" id="fatCircle"><div class="stat-value" id="fat">0g</div></div><div class="stat-label">Fat / 65g</div></div>
+    </div>
+
+    <div class="foods" id="foodList"></div>
+  </div>
+
+  <script>
+    const foods = {
+  'roti': [120, 4, 22, 2],
+  'rice': [200, 4, 45, 0.4],
+  'dal': [150, 9, 20, 3],
+  'idli': [70, 2, 12, 0.4],
+  'dosa': [130, 3, 22, 3],
+  'poha': [180, 3, 30, 4],
+  'upma': [220, 5, 35, 6],
+  'paratha': [240, 5, 32, 10],
+  'aloo paratha': [290, 6, 38, 12],
+  'pulao': [360, 6, 55, 10],
+  'rajma chawal': [400, 14, 60, 8],
+  'chole bhature': [600, 18, 60, 25],
+  'samosa': [250, 4, 30, 12],
+  'pav bhaji': [400, 8, 45, 18],
+  'vada pav': [290, 6, 35, 14],
+  'maggi': [330, 8, 45, 12],
+  'pani puri': [150, 3, 20, 5],
+  'sev puri': [220, 5, 28, 10],
+  'dahi puri': [180, 6, 25, 7],
+  'sandwich': [250, 10, 30, 10],
+  'momos': [220, 8, 30, 8],
+  'burger': [450, 20, 40, 22],
+  'shawarma': [350, 25, 28, 15],
+  'pizza': [285, 12, 33, 10],
+  'french fries': [320, 4, 41, 15],
+  'chicken biryani': [500, 25, 60, 18],
+  'mutton biryani': [550, 30, 58, 22],
+
+  // 🍗 Protein Sources
+  'egg': [78, 6, 0.6, 5],
+  'boiled egg': [78, 6, 0.6, 5],
+  'omelette': [150, 8, 1, 12],
+  'chicken': [250, 27, 0, 14],
+  'fish': [230, 25, 0, 14],
+  'paneer': [265, 18, 6, 20],
+  'tofu': [80, 8, 2, 4],
+
+  // 🍎 Fruits
+  'apple': [80, 0.3, 21, 0.2],
+  'banana': [90, 1, 23, 0.3],
+  'mango': [99, 1, 25, 0.6],
+  'orange': [60, 1, 15, 0.2],
+  'papaya': [43, 0.5, 11, 0.3],
+  'watermelon': [30, 0.6, 8, 0.2],
+  'pomegranate': [83, 1.7, 19, 1.2],
+  'guava': [68, 2.6, 14, 1],
+  'grapes': [70, 0.6, 18, 0.3],
+  'pineapple': [50, 0.5, 13, 0.1],
+  'chikoo': [83, 0.4, 20, 1.1],
+  'custard apple': [94, 2.1, 23, 0.6],
+  'jackfruit': [95, 1.7, 23, 0.6],
+  'strawberry': [33, 0.8, 8, 0.3],
+  'kiwi': [41, 0.8, 10, 0.4],
+  'pear': [57, 0.4, 15, 0.1],
+  'dates': [282, 2.5, 75, 0.4],
+  'dry figs': [249, 3.3, 64, 1],
+  'lemon': [30, 1, 9, 0.3],
+  'coconut water': [45, 0, 9, 0],
+
+  // 🥦 Vegetables
+  'spinach': [23, 2.9, 3.6, 0.4],
+  'broccoli': [34, 2.8, 7, 0.4],
+  'cauliflower': [25, 2, 5, 0.3],
+  'cabbage': [22, 1.3, 5.2, 0.1],
+  'brinjal': [35, 1, 8, 0.2],
+  'okra': [33, 2, 7, 0.2],
+  'carrot': [41, 0.9, 10, 0.2],
+  'beetroot': [43, 1.6, 10, 0.2],
+  'tomato': [18, 0.9, 3.9, 0.2],
+  'potato': [87, 2, 20, 0.1],
+  'onion': [40, 1.1, 9, 0.1],
+  'garlic': [149, 6.4, 33, 0.5],
+  'peas': [81, 5, 14, 0.4],
+  'cucumber': [15, 0.7, 3.6, 0.1],
+  'bottle gourd': [14, 0.6, 3.4, 0.1],
+  'bitter gourd': [17, 1, 3, 0.2],
+  'ridge gourd': [20, 0.6, 4, 0.2],
+  'pumpkin': [26, 1, 6.5, 0.1],
+  'methi leaves': [49, 4.4, 6, 0.9],
+  'drumstick': [37, 2.1, 8, 0.2],
+  'coriander leaves': [23, 2.1, 3.7, 0.5],
+  'mint leaves': [44, 3.8, 9, 0.7],
+  'green chilli': [40, 2, 9, 0.2],
+  'ginger': [80, 2, 18, 0.7],
+
+  // 🥜 Nuts and Seeds
+  'almonds': [579, 21, 22, 50],
+  'cashews': [553, 18, 30, 44],
+  'walnuts': [654, 15, 14, 65],
+  'pistachios': [560, 20, 28, 45],
+  'peanuts': [567, 25, 16, 49],
+  'raisins': [299, 3.1, 79, 0.5],
+  'dates dry': [282, 2.5, 75, 0.4],
+  'chia seeds': [486, 17, 42, 31],
+  'flax seeds': [534, 18, 29, 42],
+  'pumpkin seeds': [559, 30, 11, 49],
+  'sunflower seeds': [584, 21, 20, 51],
+  'sesame seeds': [573, 18, 23, 50]
+};
+          let eaten = [], total = [0, 0, 0, 0];
+
+    function addFood() {
+      const input = document.getElementById('food');
+      const food = input.value.toLowerCase().trim();
+      if (foods[food]) {
+        eaten.push(food);
+        total = total.map((sum, i) => sum + foods[food][i]);
+        update();
+        input.value = '';
+      } else {
+        alert('Food not found! Try: ' + Object.keys(foods).join(', '));
+      }
+    }
+
+    function remove(index) {
+      const food = eaten[index];
+      total = total.map((sum, i) => sum - foods[food][i]);
+      eaten.splice(index, 1);
+      update();
+    }
+
+    function update() {
+      const limits = [2000, 50, 250, 65];
+      const ids = ['calories', 'protein', 'carbs', 'fat'];
+      const circles = ['calCircle', 'proteinCircle', 'carbsCircle', 'fatCircle'];
+      
+      ids.forEach((id, i) => {
+        const value = total[i];
+        const percent = Math.min((value / limits[i]) * 100, 100);
+        const isOver = value > limits[i];
+        const color = isOver ? '#ff4444' : '#4CAF50';
+        const degrees = (percent / 100) * 360;
+        
+        document.getElementById(id).textContent = value + (i > 0 ? 'g' : '');
+        document.getElementById(circles[i]).style.background = 
+          `conic-gradient(${color} ${degrees}deg, #e0e0e0 ${degrees}deg)`;
+      });
+      
+      document.getElementById('foodList').innerHTML = eaten.map((food, i) => 
+        `<div class="food-item">${food} (${foods[food][0]} cal) <button class="remove" onclick="remove(${i})">Remove</button></div>`
+      ).join('');
+    }
+
+    function reset() { eaten = []; total = [0, 0, 0, 0]; update(); }
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98ebe1c8a6d09a87',t:'MTc2MDQ5NTI5NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
